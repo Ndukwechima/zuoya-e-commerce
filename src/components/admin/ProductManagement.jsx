@@ -1,22 +1,26 @@
-import React from 'react'
-import { Link } from 'react-router-dom';
+import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { deleteProduct, fetchAdminProducts } from '../../redux/slices/adminProductSlice';
 
 const ProductManagement = () => {
-    const products = [
-        {
-            _id: 123123,
-            name: 'Shirt',
-            price: 100,
-            sku: '123123123',
-        }
-    ]
+  const dispatch = useDispatch();
+  const { products, loading, error } = useSelector(
+    (state) => state.adminProducts
+  );
 
-const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-        // delete product
-        console.log("Deleting product with id:", id);
+  useEffect(() => {
+    dispatch(fetchAdminProducts())
+  }, [dispatch]);
+
+  const handleDelete = (id) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      dispatch(deleteProduct(id));
     }
-}
+  };
+
+  if (loading) return <p>Loading...</p>;
+    if (error) return <p>Error: {error}</p>;
 
 
   return (
@@ -45,23 +49,26 @@ const handleDelete = (id) => {
                   <td className="p-4">${product.price}</td>
                   <td className="p-4">{product.sku}</td>
                   <td className="p-4 whitespace-nowrap">
-                    <Link to={`/admin/products/${product._id}/edit`}
-                      className='bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600'
+                    <Link
+                      to={`/admin/products/${product._id}/edit`}
+                      className="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600"
                     >
-                        Edit
+                      Edit
                     </Link>
-                    <button onClick={() => handleDelete(product._id)}
-                     className='bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600'
-                    >Delete</button>
+                    <button
+                      onClick={() => handleDelete(product._id)}
+                      className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td 
-                colSpan={4}
-                className='p-4 text-center text-gray-500'
-                >No Product Found!</td>
+                <td colSpan={4} className="p-4 text-center text-gray-500">
+                  No Product Found!
+                </td>
               </tr>
             )}
           </tbody>
@@ -69,6 +76,6 @@ const handleDelete = (id) => {
       </div>
     </div>
   );
-}
+};
 
-export default ProductManagement
+export default ProductManagement;

@@ -19,7 +19,7 @@ const [priceRange, setPriceRange] = useState([0, 100]);
 
 const categories = ["Top Wear", "Bottom Wear"];
 
-const colors = ["Red", "Blue", "Black", "Green", "Yellow", "Gray", "White", "Pink", "Black", "Beige", "Navy" ];
+const colors = ["Red", "Blue", "Black", "Green", "Yellow", "Gray", "White", "Pink", "Beige", "Navy" ];
 
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -30,41 +30,48 @@ const brands = ["Urban Threads", "Modern Fit", "Street Style", "Beach Breeze", "
 const genders = ["Men", "Women"];
 
 useEffect(() => {
-    const params = Object.fromEntries([...searchParams]);
-    
-    setFilters({
-        categories: params.category || '',
-        gender: params.gender || '',
-        color: params.color || '',
-        size: params.size ? params.size.split(',') : [],
-        material: params.material ? params.material.split(',') : [],
-        brand: params.brand ? params.brand.split(',') : [],
-        minPrice: params.minPrice || 0,
-        maxPrice: params.maxPrice || 100,
-    });
-    setPriceRange([0, params.maxPrice || 100]);
+  const params = Object.fromEntries([...searchParams]);
+  const min = Number(params.minPrice) || 0;
+  const max = Number(params.maxPrice) || 100;
+
+  setFilters({
+    category: params.category || "",
+    gender: params.gender || "",
+    color: params.color || "",
+    size: params.size ? params.size.split(",") : [],
+    material: params.material ? params.material.split(",") : [],
+    brand: params.brand ? params.brand.split(",") : [],
+    minPrice: min,
+    maxPrice: max,
+  });
+
+  setPriceRange([min, max]);
 }, [searchParams]);
 
-const handleFilterChange = (e) => {
-    const {name, value, checked, type} = e.target;
-    let newFilters = { ...filters}
 
-    if (type === "checkbox") {
-        if(checked) {
-            newFilters[name] = [...(newFilters[name] || []), value];
-        }else {
-            newFilters[name] = newFilters[name].filter((item) => item !== value)
-        }
-    }else {
-        newFilters[name] = value;
+const handleFilterChange = (e) => {
+  const { name, value, checked, type } = e.target;
+  const updatedFilters = { ...filters };
+
+  if (type === "checkbox") {
+    if (checked) {
+      updatedFilters[name] = [...(updatedFilters[name] || []), value];
+    } else {
+      updatedFilters[name] = updatedFilters[name].filter(
+        (item) => item !== value
+      );
     }
-    setFilters(newFilters)
-    updateURLParams(newFilters)
-}
+  } else {
+    updatedFilters[name] = value;
+  }
+
+  setFilters(updatedFilters);
+  updateURLParams(updatedFilters);
+};
+
 
 const updateURLParams = (newFilters) => {
   const params = new URLSearchParams();
-  // {category: "Top Wear", size: ["XS", "S"]}
   Object.keys(newFilters).forEach((key) => {
     if (Array.isArray(newFilters[key]) && newFilters[key].length > 0) {
       params.append(key, newFilters[key].join(","));
@@ -80,10 +87,10 @@ const updateURLParams = (newFilters) => {
 // Price Range
 const handlePriceChange = (e) => {
     const newPrice = e.target.value;
-    setPriceRange([0, newPrice])
-    const newFilters = { ...filters, minPrice: 0, maxPrice: newPrice}
-    setFilters(filters);
-    updateURLParams(newFilters)
+    setPriceRange([0, newPrice]);
+    const updatedFilters = { ...filters, minPrice: 0, maxPrice: newPrice };
+    setFilters(updatedFilters);
+    updateURLParams(updatedFilters);
 }
 
   return (
@@ -132,18 +139,18 @@ const handlePriceChange = (e) => {
         <label className="block text-gray-900 font-medium mb-2">Color</label>
         <div className="flex flex-wrap gap-2">
           {colors.map((color) => (
-            <button
+            <div
               key={color}
-              onClick={handleFilterChange}
-              name="color"
-              value={color}
-              className={`w-8 h-8 rounded-full border
-              border-gray-300 cursor-pointer transition 
-              hover:scale-105 ${
+              onClick={() => {
+                const updatedFilters = { ...filters, color };
+                setFilters(updatedFilters);
+                updateURLParams(updatedFilters);
+              }}
+              className={`w-8 h-8 rounded-full border border-gray-300 cursor-pointer transition hover:scale-105 ${
                 filters.color === color ? "ring-2 ring-blue-500" : ""
-              } `}
-              style={{ backgroundColor: color.toLocaleLowerCase() }}
-            ></button>
+              }`}
+              style={{ backgroundColor: color.toLowerCase() }}
+            ></div>
           ))}
         </div>
       </div>

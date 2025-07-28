@@ -1,46 +1,28 @@
-import React from 'react'
-
-
-const checkout = {
-  _id: "12344",
-  createdAt: new Date(),
-  checkoutItems: [
-    {
-      productId: "1",
-      name: "Jacket",
-      color: "black",
-      size: "M",
-      price: 150,
-      quantity: 1,
-      image: "https://picsum.photos/150?random=1",
-    },
-    {
-      productId: "2",
-      name: "T-Shirt",
-      color: "black",
-      size: "M",
-      price: 120,
-      quantity: 2,
-      image: "https://picsum.photos/150?random=3",
-    },
-  ],
-  shippingAddress: {
-    address: "123 Fashion Street",
-    city: "New York",
-    country: "USA",
-  }
-};
+import React, { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import {clearCart} from '../redux/slices/cartSlice'
 const OrderConfirmation = () => {
+const dispatch = useDispatch();
+const navigate = useNavigate();
+const {checkout} = useSelector((state) => state.checkout);
+
+// clear the cart when the order is confirmed
+useEffect(() => {
+  if (checkout && checkout._id) {
+    dispatch(clearCart());
+    localStorage.removeItem('cart');
+  } 
+  else {
+    navigate('/my-orders');
+  }
+}, [checkout, dispatch, navigate]);
 
   const calculatedEstimatedDelivery = (createdAt) => {
     const orderDate = new Date(createdAt);
     orderDate.setDate(orderDate.getDate() + 10); // Add 10 days to the order date
     return orderDate.toLocaleDateString();
   }
-
-
-
-
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white">

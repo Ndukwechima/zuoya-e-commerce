@@ -1,70 +1,45 @@
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import ProductGrid from './ProductGrid';
-
-
-const selectedProduct = {
-  name: "Stylish Jacket",
-  price: "120",
-  originalPrice: 155,
-  description: "This is a stylish Jacket perfect for any occasion",
-  brand: "Fashion Brand",
-  material: "Leather",
-  size: ["S", "M", "L", "XL"],
-  color: ["Red", "Black"],
-  images: [
-    {
-      url: "https://picsum.photos/500/500?random=1",
-      altText: "Stylish Jacket 1",
-    },
-    {
-      url: "https://picsum.photos/500/500?random=2",
-      altText: "Stylish Jacket 2",
-    },
-  ],
-};
-
-const similarProducts = [
-  {
-    _id: 1,
-    name: "Product 1",
-    price: 100,
-    images: [{ url: "https://picsum.photos/500/500?random=2" }],
-  },
-  {
-    _id: 2,
-    name: "Product 1",
-    price: 100,
-    images: [{ url: "https://picsum.photos/500/500?random=3" }],
-  },
-  {
-    _id: 3,
-    name: "Product 1",
-    price: 100,
-    images: [{ url: "https://picsum.photos/500/500?random=4" }],
-  },
-  {
-    _id: 4,
-    name: "Product 1",
-    price: 100,
-    images: [{ url: "https://picsum.photos/500/500?random=8" }],
-  },
-];
+import {  useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import {fetchProductDetails, fetchSimilarProducts} from '../../redux/slices/productsSlice'
+import { addToCart } from '../../redux/slices/cartSlice';
 
 
 
-const ProductDetails = () => {
-const [mainImage, setMainImage] = useState("");
+
+
+const ProductDetails = ({productId}) => {
+  const {id} = useParams();
+  const dispatch = useDispatch();
+  const {selectedProduct, loading, error, similarProducts} = useSelector((state) => state.products);
+  console.log(selectedProduct);
+  const {user, guestId} = useSelector((state) => state.auth);
+
+const [mainImage, setMainImage] = useState(null);
 const [selectedSize, setSelectedSize] = useState("");
 const [selectedColor, setSelectedColor] = useState("");
 const [quantity, setQuantity] = useState(1);
 const [isButtonDisabled, setIsButtonDisabled] = useState(false)
 
+const productFetchId = productId || id;
 
 useEffect(() => {
-    if (selectedProduct?.images?.length > 0) {
-        setMainImage(selectedProduct.images[0].url)
-    }
+  if (productFetchId) {
+    dispatch(fetchProductDetails(productFetchId));
+    dispatch(fetchSimilarProducts({id: productFetchId}));
+  }
+}, [dispatch, productFetchId])
+
+
+useEffect(() => {
+     if (
+       Array.isArray(selectedProduct?.images) &&
+       selectedProduct.images.length > 0
+     ) {
+       setMainImage(selectedProduct.images[0].url);
+     }
 }, [selectedProduct])
 
 const handleQuantityChange = (action) => {
@@ -84,22 +59,41 @@ const handleAddToCart = () => {
     return;
   }
   setIsButtonDisabled(true);
-  setTimeout(() => {
+  dispatch(addToCart({
+    productId: productFetchId,
+    quantity,
+    size: selectedSize,
+    color: selectedColor,
+    guestId,
+    userId: user?._id
+  })
+  ).then(() => {
     toast.success("Product added to cart!", {
       duration: 1000, // optional
-    });
+    })
+  })
+
+  .finally(() => {
     setIsButtonDisabled(false);
-  }, 500)
+  })
 }
 
+if (loading) {
+    return <p>Loading...</p>
+}
+
+if(error) {
+    return <p>Error: {error}</p>
+}
 
   return (
     <div className="p-6">
+      {selectedProduct && (
       <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg">
         <div className="flex flex-col md:flex-row">
           {/* Left Thumbnails */}
           <div className="hidden md:flex flex-col space-y-4 mr-6">
-            {selectedProduct.images.map((image, index) => (
+            {selectedProduct?.images?.map((image, index) => (
               <img
                 onClick={() => setMainImage(image.url)}
                 key={index}
@@ -126,7 +120,7 @@ const handleAddToCart = () => {
           </div>
           {/* Mobile  Thumbnail */}
           <div className="md:hidden flex overflow-x-scroll space-x-4 mb-4">
-            {selectedProduct.images.map((image, index) => (
+            {selectedProduct?.images?.map((image, index) => (
               <img
                 onClick={() => setMainImage(image.url)}
                 key={index}
@@ -158,7 +152,7 @@ const handleAddToCart = () => {
             <div className="mb-4">
               <p className="text-gray-700">Color:</p>
               <div className="flex gap-2 mt-2">
-                {selectedProduct.color.map((color) => (
+                {selectedProduct.colors.map((color) => (
                   <button
                     onClick={() => setSelectedColor(color)}
                     key={color}
@@ -179,7 +173,7 @@ const handleAddToCart = () => {
             <div className="mb-4">
               <p className="text-gray-700">Size:</p>
               <div className="flex gap-2 mt-2">
-                {selectedProduct.size.map((size) => (
+                {selectedProduct.sizes.map((size) => (
                   <button
                     onClick={() => setSelectedSize(size)}
                     key={size}
@@ -242,9 +236,10 @@ const handleAddToCart = () => {
             <h2 className='text-2xl text-center font-medium mb-4'>
               You May Also Like
             </h2>
-            <ProductGrid products={similarProducts} />
+            <ProductGrid products={similarProducts} loading={loading} error={error} />
          </div>
       </div>
+      )}
     </div>
   );
 }
